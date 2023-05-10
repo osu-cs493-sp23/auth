@@ -5,7 +5,12 @@
 const router = require('express').Router()
 
 const { validateAgainstSchema } = require('../lib/validation')
-const { UserSchema, insertNewUser, getUserById } = require('../models/user')
+const {
+    UserSchema,
+    insertNewUser,
+    getUserById,
+    validateUser
+} = require('../models/user')
 
 router.post('/', async function (req, res) {
     if (validateAgainstSchema(req.body, UserSchema)) {
@@ -18,6 +23,30 @@ router.post('/', async function (req, res) {
     } else {
         res.status(400).send({
             error: "Request body does not contain a valid User."
+        })
+    }
+})
+
+router.post('/login', async function (req, res, next) {
+    if (req.body && req.body.id && req.body.password) {
+        try {
+            const authenticated = await validateUser(
+                req.body.id,
+                req.body.password
+            )
+            if (authenticated) {
+                res.status(200).send({})
+            } else {
+                res.status(401).send({
+                    error: "Invalid authentication credentials"
+                })
+            }
+        } catch (e) {
+            next(e)
+        }
+    } else {
+        res.status(400).send({
+            error: "Request body requires `id` and `password`."
         })
     }
 })
