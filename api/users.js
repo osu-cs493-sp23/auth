@@ -11,6 +11,7 @@ const {
     getUserById,
     validateUser
 } = require('../models/user')
+const { generateAuthToken } = require("../lib/auth")
 
 router.post('/', async function (req, res) {
     if (validateAgainstSchema(req.body, UserSchema)) {
@@ -35,7 +36,10 @@ router.post('/login', async function (req, res, next) {
                 req.body.password
             )
             if (authenticated) {
-                res.status(200).send({})
+                const token = generateAuthToken(req.body.id)
+                res.status(200).send({
+                    token: token
+                })
             } else {
                 res.status(401).send({
                     error: "Invalid authentication credentials"
