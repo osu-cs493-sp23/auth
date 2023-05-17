@@ -11,7 +11,7 @@ const {
     getUserById,
     validateUser
 } = require('../models/user')
-const { generateAuthToken } = require("../lib/auth")
+const { generateAuthToken, requireAuthentication } = require("../lib/auth")
 
 router.post('/', async function (req, res) {
     if (validateAgainstSchema(req.body, UserSchema)) {
@@ -55,16 +55,23 @@ router.post('/login', async function (req, res, next) {
     }
 })
 
-router.get('/:id', async function (req, res, next) {
-    try {
-        const user = await getUserById(req.params.id)
-        if (user) {
-            res.status(200).send(user)
-        } else {
-            next()
+router.get('/:id', requireAuthentication, async function (req, res, next) {
+    if (req.user === req.params.id) {
+        try {
+            const user = await getUserById(req.params.id)
+            if (user) {
+                res.status(200).send(user)
+            } else {
+                next()
+            }
+        } catch (e) {
+            next(e)
         }
-    } catch (e) {
-        next(e)
+    } else {
+        res.status(403).send({
+            err: "Unauthorized to access the specified resource"
+        })
+        // next()
     }
 })
 
